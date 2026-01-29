@@ -1,0 +1,382 @@
+/* Основные стили для Aldos RPG */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f0f0f0;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#game-container {
+    width: 100%;
+    max-width: 800px;
+    height: 90vh;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Экран загрузки */
+#loading-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #f5f5f5;
+    z-index: 1000;
+    transition: opacity 0.5s ease;
+}
+
+#loading-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Основные игровые элементы */
+.game-location {
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+    position: relative;
+    display: none;
+}
+
+.game-location.active {
+    display: block;
+}
+
+.location-title {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 10px;
+    border-bottom: 2px solid #ccc;
+}
+
+.location-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.location-btn {
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    min-width: 180px;
+    text-align: center;
+}
+
+.location-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.location-btn:active {
+    transform: scale(0.98);
+}
+
+.monster-frame {
+    position: absolute;
+    width: 120px;
+    height: 90px;
+    background-color: white;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
+.monster-icon {
+    font-size: 36px;
+    margin-bottom: 5px;
+}
+
+.monster-name {
+    font-weight: bold;
+    font-size: 12px;
+    text-align: center;
+}
+
+.monster-stats {
+    font-size: 10px;
+    text-align: center;
+}
+
+.player-stats {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    z-index: 20;
+}
+
+.battle-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-100);
+    display: flex;
+    gap: 10px;
+    z-index: 20;
+}
+
+.battle-btn {
+    padding: 10px 15px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.battle-btn:hover {
+    opacity: 0.9;
+}
+
+.loot-pile {
+    position: absolute;
+    width: 200px;
+    height: 120px;
+    background-color: #8B4513;
+    border: 2px solid #654321;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.loot-title {
+    color: white;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.loot-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: center;
+}
+
+.loot-item {
+    width: 30px;
+    height: 30px;
+    background-color: #d2b48c;
+    border: 1px solid #b8860b;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-overlay.hidden {
+    display: none;
+}
+
+.modal-window {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.modal-header {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-content {
+    margin-bottom: 20px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.notification {
+    position: absolute;
+    top: 70px;
+    left: 10px;
+    width: 300px;
+    background-color: #2196F3;
+    border: 2px solid #1976D2;
+    border-radius: 5px;
+    padding: 10px;
+    z-index: 100;
+    color: white;
+    font-size: 14px;
+}
+
+.notification.success {
+    background-color: #4CAF50;
+    border-color: #388E3C;
+}
+
+.notification.warning {
+    background-color: #FF9800;
+    border-color: #F57C00;
+}
+
+.notification.error {
+    background-color: #f44336;
+    border-color: #D32F2F;
+}
+
+.notification.victory {
+    background-color: #9C27B0;
+    border-color: #7B1FA2;
+}
+
+.notification.loot {
+    background-color: #FF9800;
+    border-color: #F57C00;
+}
+
+.notification.level {
+    background-color: #7B1FA2;
+    border-color: #6A1B9A;
+}
+
+.character-creation {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.creation-field {
+    margin-bottom: 15px;
+}
+
+.creation-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.creation-field input, .creation-field select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.login-form, .register-form {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Анимации */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse {
+    animation: pulse 0.5s ease-in-out;
+}
