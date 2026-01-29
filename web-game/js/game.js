@@ -371,28 +371,43 @@ class RPGApp {
         // Создаем экран боя
         const battleDiv = document.createElement('div');
         battleDiv.className = 'game-location active';
+        battleDiv.setAttribute('data-location', 'battle');
+        
         battleDiv.innerHTML = `
-            <h2 class="location-title">Бой с ${this.currentMonster.name}</h2>
-            
-            <div style="display: flex; justify-content: space-around; margin: 20px 0;">
-                <div style="text-align: center;">
-                    <div style="font-size: 48px; margin-bottom: 10px;">👤</div>
-                    <div><strong>${this.currentUser.username}</strong></div>
-                    <div>HP: ${this.currentUser.hp}/${this.currentUser.hpMax}</div>
-                    <div>MP: ${this.currentUser.mp}/${this.currentUser.mpMax}</div>
+            <div class="battle-screen">
+                <h2 class="battle-title">Бой с ${this.currentMonster.name}</h2>
+                
+                <div class="battle-characters">
+                    <div class="battle-character battle-player">
+                        <div class="battle-character-icon">👤</div>
+                        <div class="battle-character-name">${this.currentUser.username}</div>
+                        <div class="battle-character-stats">Уровень: ${this.currentUser.level}</div>
+                        <div class="battle-character-stats">Класс: ${this.currentUser.class}</div>
+                        <div class="battle-character-stats">HP: <span id="player-hp">${this.currentUser.hp}</span>/<span id="player-max-hp">${this.currentUser.hpMax}</span></div>
+                        <div class="player-hp-bar"><div class="player-hp-fill" style="width: ${(this.currentUser.hp / this.currentUser.hpMax) * 100}%"></div></div>
+                        <div class="battle-character-stats">MP: <span id="player-mp">${this.currentUser.mp}</span>/<span id="player-max-mp">${this.currentUser.mpMax}</span></div>
+                        <div class="player-mp-bar"><div class="player-mp-fill" style="width: ${(this.currentUser.mp / this.currentUser.mpMax) * 100}%"></div></div>
+                        <div class="battle-character-stats">Атака: ${this.currentUser.minDmg}-${this.currentUser.maxDmg}</div>
+                        <div class="battle-character-stats">Защита: ${this.currentUser.defense}</div>
+                    </div>
+                    
+                    <div class="battle-character battle-monster">
+                        <div class="battle-character-icon">${this.currentMonster.icon}</div>
+                        <div class="battle-character-name">${this.currentMonster.name}</div>
+                        <div class="battle-character-stats">HP: <span id="monster-hp">${this.currentMonster.hp}</span>/<span id="monster-max-hp">${this.currentMonster.hpMax}</span></div>
+                        <div class="battle-character-bar"><div class="battle-character-hp" style="width: ${(this.currentMonster.hp / this.currentMonster.hpMax) * 100}%"></div></div>
+                        <div class="battle-character-stats">Атака: ${this.currentMonster.minDmg}-${this.currentMonster.maxDmg}</div>
+                        <div class="battle-character-stats">EXP: ${this.currentMonster.expReward}</div>
+                    </div>
                 </div>
                 
-                <div style="text-align: center;">
-                    <div style="font-size: 48px; margin-bottom: 10px;">${this.currentMonster.icon}</div>
-                    <div><strong>${this.currentMonster.name}</strong></div>
-                    <div>HP: ${this.currentMonster.hp}/${this.currentMonster.hpMax}</div>
+                <div class="battle-controls">
+                    <button class="battle-btn attack" onclick="app.playerAttack()">⚔️ Атака</button>
+                    <button class="battle-btn defense" onclick="app.useDefense()">🛡️ Защита</button>
+                    <button class="battle-btn magic" onclick="app.useMagic()" id="magic-btn" style="display: ${this.currentUser.mp > 0 ? 'block' : 'none'};">🔮 Магия</button>
+                    <button class="battle-btn item" onclick="app.useItem()">🧪 Предмет</button>
+                    <button class="battle-btn escape" onclick="app.endBattle()">🚪 Бежать</button>
                 </div>
-            </div>
-            
-            <div class="battle-controls">
-                <button class="battle-btn btn btn-primary" onclick="app.playerAttack()">⚔️ Атака</button>
-                <button class="battle-btn btn btn-info" onclick="app.useDefense()">🛡️ Защита</button>
-                <button class="battle-btn btn btn-warning" onclick="app.endBattle()">🚪 Уйти</button>
             </div>
         `;
 
