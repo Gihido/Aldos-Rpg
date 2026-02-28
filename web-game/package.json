@@ -2,12 +2,19 @@
     "name": "Aldos RPG Game",
     "version": "1.0.0",
     "description": "Web version of Aldos RPG game ready for VS Code Go Live Server",
-    "keywords": ["game", "rpg", "web", "vscode", "live-server"],
+    "keywords": [
+        "game",
+        "rpg",
+        "web",
+        "vscode",
+        "live-server"
+    ],
     "author": "Converted from Python/Tkinter to Web version",
     "license": "MIT",
     "scripts": {
         "start": "python3 -m http.server 8000",
-        "dev": "python3 -m http.server 8000"
+        "dev": "python3 -m http.server 8000",
+        "check": "node --check js/config.js && node --check js/utils.js && node --check js/monster.js && node --check js/player.js && node --check js/game.js && node --check js/main.js && ! rg -n \"^(<<<<<<<|=======|>>>>>>>)\" js css index.html README.md"
     },
     "directories": {
         "doc": "docs"
