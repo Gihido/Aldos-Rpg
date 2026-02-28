@@ -138,7 +138,7 @@ class RPGApp {
             return;
         }
 
-        if (userData.metadata?.isBanned) {
+        if (userData.metadata && userData.metadata.isBanned) {
             showNotification(`Аккаунт заблокирован: ${userData.metadata.banReason}`, 'error');
             return;
         }
@@ -189,7 +189,7 @@ class RPGApp {
         centerPanel.className = 'location-panel location-panel-center';
 
         this.syncMonsterForLocation(locationConfig);
-        if (this.currentMonster?.isAlive) {
+        if (this.currentMonster && this.currentMonster.isAlive) {
             this.renderMonster(centerPanel);
         } else {
             centerPanel.innerHTML = '<div class="monster-empty">В этой зоне монстров сейчас нет.</div>';
@@ -204,7 +204,7 @@ class RPGApp {
         contentGrid.appendChild(rightPanel);
         locationDiv.appendChild(contentGrid);
 
-        if (locationConfig.lootPile?.visible) {
+        if (locationConfig.lootPile && locationConfig.lootPile.visible) {
             const lootSection = document.createElement('section');
             lootSection.className = 'location-loot-row';
             this.renderLootPile(lootSection, locationConfig.lootPile);
@@ -278,7 +278,7 @@ class RPGApp {
             this.currentMonster = null;
             return;
         }
-        if (this.currentMonster?.isAlive) return;
+        if (this.currentMonster && this.currentMonster.isAlive) return;
 
         this.currentMonster = new Monster(
             null,
@@ -367,10 +367,10 @@ class RPGApp {
         const base = list[getRandomInt(0, list.length - 1)];
         const id = generateId('loot');
 
-        if (base.type === 'consumable') return { ...base, id, value: getRandomInt(18, 40) };
-        if (base.type === 'weapon') return { ...base, id, damage: getRandomInt(2, 7) };
-        if (base.type === 'armor') return { ...base, id, defense: getRandomInt(1, 5) };
-        return { ...base, id };
+        if (base.type === 'consumable') return Object.assign({}, base, { id: id, value: getRandomInt(18, 40) });
+        if (base.type === 'weapon') return Object.assign({}, base, { id: id, damage: getRandomInt(2, 7) });
+        if (base.type === 'armor') return Object.assign({}, base, { id: id, defense: getRandomInt(1, 5) });
+        return Object.assign({}, base, { id: id });
     }
 
     pickupItem(itemId) {
@@ -395,7 +395,7 @@ class RPGApp {
     }
 
     goToLocation(locationName) {
-        if (this.currentMonster?.isAlive) {
+        if (this.currentMonster && this.currentMonster.isAlive) {
             showNotification('Сначала победите монстра!', 'warning');
             return;
         }
@@ -407,7 +407,7 @@ class RPGApp {
     }
 
     startBattle() {
-        if (!this.currentMonster?.isAlive) return;
+        if (!this.currentMonster || !this.currentMonster.isAlive) return;
 
         this.gameContainer.innerHTML = `
             <div class="game-location active" data-location="battle">
@@ -439,7 +439,7 @@ class RPGApp {
     }
 
     playerAttack() {
-        if (!this.currentMonster?.isAlive) return this.renderCurrentLocation();
+        if (!this.currentMonster || !this.currentMonster.isAlive) return this.renderCurrentLocation();
 
         if (this.currentUser.battleState.stunnedTurns > 0) {
             showNotification('Вы оглушены и пропускаете ход', 'warning');
@@ -459,7 +459,7 @@ class RPGApp {
     }
 
     useMagicAttack() {
-        if (!this.currentMonster?.isAlive) return this.renderCurrentLocation();
+        if (!this.currentMonster || !this.currentMonster.isAlive) return this.renderCurrentLocation();
 
         const manaCost = 8;
         if (this.currentUser.mp < manaCost) {
@@ -499,7 +499,7 @@ class RPGApp {
     }
 
     monsterAttack() {
-        if (!this.currentMonster?.isAlive) return this.renderCurrentLocation();
+        if (!this.currentMonster || !this.currentMonster.isAlive) return this.renderCurrentLocation();
 
         const rawDamage = this.currentMonster.attack();
         const damage = this.currentUser.battleState.defenseActive ? Math.floor(rawDamage / 2) : rawDamage;
@@ -584,8 +584,8 @@ class RPGApp {
             <div class="inventory-panel">
                 <div class="inventory-summary">
                     <div>🎒 Вес: ${this.currentUser.getCurrentInventoryWeight().toFixed(1)} / ${this.currentUser.getMaxInventoryWeight()}</div>
-                    <div>⚔️ Оружие: ${this.currentUser.equippedItems.weapon?.name || 'не экипировано'}</div>
-                    <div>🛡️ Броня: ${this.currentUser.equippedItems.armor?.name || 'не экипировано'}</div>
+                    <div>⚔️ Оружие: ${(this.currentUser.equippedItems.weapon && this.currentUser.equippedItems.weapon.name) || 'не экипировано'}</div>
+                    <div>🛡️ Броня: ${(this.currentUser.equippedItems.armor && this.currentUser.equippedItems.armor.name) || 'не экипировано'}</div>
                 </div>
                 <div class="inventory-list">${itemsMarkup}</div>
             </div>
@@ -652,11 +652,11 @@ class RPGApp {
                     <div class="profile-card equipment-card">
                         <h4>Экипировка</h4>
                         <div class="equip-row">
-                            <span>⚔️ ${p.equippedItems.weapon?.name || 'Оружие не надето'}</span>
+                            <span>⚔️ ${(p.equippedItems.weapon && p.equippedItems.weapon.name) || 'Оружие не надето'}</span>
                             <button class="btn btn-secondary" onclick="app.unequipSlot('weapon')">Снять</button>
                         </div>
                         <div class="equip-row">
-                            <span>🛡️ ${p.equippedItems.armor?.name || 'Броня не надета'}</span>
+                            <span>🛡️ ${(p.equippedItems.armor && p.equippedItems.armor.name) || 'Броня не надета'}</span>
                             <button class="btn btn-secondary" onclick="app.unequipSlot('armor')">Снять</button>
                         </div>
                     </div>
@@ -717,7 +717,7 @@ class RPGApp {
 
         const db = this.loadPlayersDB();
         const old = db.players[this.currentUser.username] || {};
-        const updated = { ...this.currentUser.toDict(), passwordHash: old.passwordHash || '' };
+        const updated = Object.assign({}, this.currentUser.toDict(), { passwordHash: old.passwordHash || '' });
 
         db.players[this.currentUser.username] = updated;
         db.metadata.lastUpdate = formatDate();
