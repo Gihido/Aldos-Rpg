@@ -665,6 +665,50 @@ class RPGApp {
             </div>
         `;
 
+        this.syncCurrentUser();
+        closeModal();
+        this.showInventory();
+        this.renderCurrentLocation();
+    }
+
+    showCharacterInfo() {
+        const p = this.currentUser;
+        const content = `
+            <div class="profile-panel">
+                <div class="profile-head">
+                    <h3>${p.username}</h3>
+                    <div>${p.class} • ${p.gender}</div>
+                </div>
+                <div class="profile-grid">
+                    <div class="profile-card">
+                        <div><strong>Уровень:</strong> ${p.level}</div>
+                        <div><strong>Опыт:</strong> ${p.experience}/${expForNextLevel(p.level)}</div>
+                        <div><strong>Атака:</strong> ${p.minDmg}-${p.maxDmg}</div>
+                        <div><strong>Защита:</strong> ${p.defense}</div>
+                    </div>
+                    <div class="profile-card">
+                        <div><strong>HP/MP:</strong> ${p.hp}/${p.hpMax} • ${p.mp}/${p.mpMax}</div>
+                        <div><strong>Сила:</strong> ${p.stats.strength}</div>
+                        <div><strong>Ловкость:</strong> ${p.stats.agility}</div>
+                        <div><strong>Интеллект:</strong> ${p.stats.intelligence}</div>
+                        <div><strong>Выносливость:</strong> ${p.stats.vitality}</div>
+                    </div>
+                    <div class="profile-card equipment-card">
+                        <h4>Экипировка</h4>
+                        <div class="equip-row">
+                            <span>⚔️ ${(p.equippedItems.weapon && p.equippedItems.weapon.name) || 'Оружие не надето'}</span>
+                            <button class="btn btn-secondary" onclick="app.unequipSlot('weapon')">Снять</button>
+                        </div>
+                        <div class="equip-row">
+                            <span>🛡️ ${(p.equippedItems.armor && p.equippedItems.armor.name) || 'Броня не надета'}</span>
+                            <button class="btn btn-secondary" onclick="app.unequipSlot('armor')">Снять</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-foot">Последний вход: ${new Date(p.metadata.lastLogin).toLocaleString('ru-RU')}</div>
+            </div>
+        `;
+
         showModal(content, 'Профиль игрока');
     }
 
