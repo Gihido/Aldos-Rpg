@@ -619,6 +619,7 @@ class RPGApp {
         } else {
             showNotification('Недоступное действие', 'warning');
         }
+    }
 
         this.syncCurrentUser();
         closeModal();
