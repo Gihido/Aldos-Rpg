@@ -5,14 +5,12 @@ class RPGApp {
         this.currentUser = null;
         this.currentLocation = "Главная";
         this.currentMonster = null;
+
         this.gameContainer = document.getElementById('game-container');
         this.loadingScreen = document.getElementById('loading-screen');
 
-        // Загружаем конфигурацию
         this.config = JSON.parse(JSON.stringify(CONFIG));
         this.ensureDefaultLoot();
-
-        // Инициализируем приложение
         this.init();
     }
 
@@ -20,16 +18,20 @@ class RPGApp {
         const savedUser = loadFromStorage('currentUser');
         if (savedUser) {
             this.currentUser = Player.fromDict(savedUser);
-            this.currentLocation = this.currentUser.location || "Главная";
+            this.currentLocation = this.currentUser.location || 'Главная';
             this.showMainGame();
             return;
         }
-
         this.showAuthScreen();
     }
 
     hideLoadingScreen() {
         this.loadingScreen.classList.add('hidden');
+    }
+
+    showMainGame() {
+        this.hideLoadingScreen();
+        this.renderCurrentLocation();
     }
 
     showAuthScreen() {
@@ -45,7 +47,7 @@ class RPGApp {
                     <label for="password">Пароль:</label>
                     <input type="password" id="password" placeholder="Введите пароль">
                 </div>
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <div style="display:flex; gap:10px; margin-top:20px;">
                     <button class="btn btn-primary" onclick="app.handleLogin()">Вход</button>
                     <button class="btn btn-secondary" onclick="app.showRegisterForm()">Регистрация</button>
                 </div>
@@ -67,17 +69,13 @@ class RPGApp {
                 </div>
                 <div class="form-group">
                     <label for="regClass">Класс персонажа:</label>
-                    <select id="regClass">
-                        ${PLAYER_CLASSES.map(cls => `<option value="${cls}">${cls}</option>`).join('')}
-                    </select>
+                    <select id="regClass">${PLAYER_CLASSES.map(v => `<option value="${v}">${v}</option>`).join('')}</select>
                 </div>
                 <div class="form-group">
                     <label for="regGender">Пол:</label>
-                    <select id="regGender">
-                        ${PLAYER_GENDERS.map(gender => `<option value="${gender}">${gender}</option>`).join('')}
-                    </select>
+                    <select id="regGender">${PLAYER_GENDERS.map(v => `<option value="${v}">${v}</option>`).join('')}</select>
                 </div>
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <div style="display:flex; gap:10px; margin-top:20px;">
                     <button class="btn btn-success" onclick="app.handleRegister()">Зарегистрироваться</button>
                     <button class="btn btn-secondary" onclick="app.showAuthScreen()">Назад</button>
                 </div>
@@ -92,35 +90,35 @@ class RPGApp {
         const gender = document.getElementById('regGender').value;
 
         if (!username || !password) {
-            showNotification("Введите имя пользователя и пароль", "error");
+            showNotification('Введите имя пользователя и пароль', 'error');
             return;
         }
         if (password.length < 3) {
-            showNotification("Пароль должен быть не менее 3 символов", "error");
+            showNotification('Пароль должен быть не менее 3 символов', 'error');
             return;
         }
 
-        const playersDB = this.loadPlayersDB();
-        if (playersDB.players[username]) {
-            showNotification("Пользователь с таким именем уже существует", "error");
+        const db = this.loadPlayersDB();
+        if (db.players[username]) {
+            showNotification('Пользователь с таким именем уже существует', 'error');
             return;
         }
 
         this.currentUser = new Player(username, playerClass, gender);
-        this.currentUser.location = "Главная";
+        this.currentUser.location = 'Главная';
 
         const userData = this.currentUser.toDict();
         userData.passwordHash = hashPassword(password);
 
-        playersDB.players[username] = userData;
-        playersDB.metadata.totalPlayers = Object.keys(playersDB.players).length;
-        playersDB.metadata.lastUpdate = formatDate();
+        db.players[username] = userData;
+        db.metadata.totalPlayers = Object.keys(db.players).length;
+        db.metadata.lastUpdate = formatDate();
 
-        saveToStorage('playersDB', playersDB);
+        saveToStorage('playersDB', db);
         saveToStorage('currentUser', userData);
 
-        this.currentLocation = "Главная";
-        showNotification(`Регистрация успешна! Добро пожаловать, ${username}!`, "success");
+        this.currentLocation = 'Главная';
+        showNotification(`Регистрация успешна! Добро пожаловать, ${username}!`, 'success');
         this.showMainGame();
     }
 
@@ -129,72 +127,88 @@ class RPGApp {
         const password = document.getElementById('password').value;
 
         if (!username || !password) {
-            showNotification("Введите имя пользователя и пароль", "error");
+            showNotification('Введите имя пользователя и пароль', 'error');
             return;
         }
 
-        const playersDB = this.loadPlayersDB();
-        const userData = playersDB.players[username];
+        const db = this.loadPlayersDB();
+        const userData = db.players[username];
         if (!userData) {
-            showNotification("Пользователь не найден", "error");
+            showNotification('Пользователь не найден', 'error');
             return;
         }
 
-        if (userData.metadata && userData.metadata.isBanned) {
-            showNotification(`Аккаунт заблокирован: ${userData.metadata.banReason}`, "error");
+        if (userData.metadata?.isBanned) {
+            showNotification(`Аккаунт заблокирован: ${userData.metadata.banReason}`, 'error');
             return;
         }
 
-        const storedHash = userData.passwordHash;
-        if (storedHash && storedHash !== hashPassword(password)) {
-            showNotification("Неверный пароль", "error");
+        if (userData.passwordHash && userData.passwordHash !== hashPassword(password)) {
+            showNotification('Неверный пароль', 'error');
             return;
         }
 
         this.currentUser = Player.fromDict(userData);
         this.currentUser.metadata.lastLogin = formatDate();
-        this.currentLocation = this.currentUser.location || "Главная";
+        this.currentLocation = this.currentUser.location || 'Главная';
 
         this.syncCurrentUser();
-        showNotification(`Добро пожаловать, ${username}!`, "success");
+        showNotification(`Добро пожаловать, ${username}!`, 'success');
         this.showMainGame();
-    }
-
-    showMainGame() {
-        this.hideLoadingScreen();
-        this.renderCurrentLocation();
     }
 
     renderCurrentLocation() {
         const locationConfig = this.config.locations[this.currentLocation];
         if (!locationConfig) {
-            showNotification(`Локация ${this.currentLocation} не найдена`, "error");
+            showNotification(`Локация ${this.currentLocation} не найдена`, 'error');
             return;
         }
 
         this.gameContainer.innerHTML = '';
 
         const locationDiv = document.createElement('div');
-        locationDiv.className = 'game-location active';
+        locationDiv.className = 'game-location active game-layout';
         locationDiv.style.backgroundColor = locationConfig.bgColor;
         locationDiv.style.color = locationConfig.fgColor;
 
-        const titleDiv = document.createElement('div');
-        titleDiv.className = 'location-title';
-        titleDiv.textContent = locationConfig.title;
+        const title = document.createElement('div');
+        title.className = 'location-title';
+        title.textContent = locationConfig.title;
+        locationDiv.appendChild(title);
 
-        locationDiv.appendChild(titleDiv);
         locationDiv.appendChild(this.renderToolbar());
-        locationDiv.appendChild(this.renderLocationButtons(locationConfig));
-        this.renderPlayerStats(locationDiv);
+
+        const contentGrid = document.createElement('div');
+        contentGrid.className = 'location-grid';
+
+        const leftPanel = document.createElement('section');
+        leftPanel.className = 'location-panel';
+        leftPanel.appendChild(this.renderLocationButtons(locationConfig));
+
+        const centerPanel = document.createElement('section');
+        centerPanel.className = 'location-panel location-panel-center';
 
         this.syncMonsterForLocation(locationConfig);
-        if (this.currentMonster && this.currentMonster.isAlive) {
-            this.renderMonster(locationDiv);
+        if (this.currentMonster?.isAlive) {
+            this.renderMonster(centerPanel);
+        } else {
+            centerPanel.innerHTML = '<div class="monster-empty">В этой зоне монстров сейчас нет.</div>';
         }
 
+        const rightPanel = document.createElement('section');
+        rightPanel.className = 'location-panel';
+        rightPanel.appendChild(this.renderPlayerStats());
+
+        contentGrid.appendChild(leftPanel);
+        contentGrid.appendChild(centerPanel);
+        contentGrid.appendChild(rightPanel);
+        locationDiv.appendChild(contentGrid);
+
         if (locationConfig.lootPile?.visible) {
-            this.renderLootPile(locationDiv, locationConfig.lootPile);
+            const lootSection = document.createElement('section');
+            lootSection.className = 'location-loot-row';
+            this.renderLootPile(lootSection, locationConfig.lootPile);
+            locationDiv.appendChild(lootSection);
         }
 
         this.gameContainer.appendChild(locationDiv);
@@ -202,68 +216,61 @@ class RPGApp {
 
     renderToolbar() {
         const toolbar = document.createElement('div');
-        toolbar.style.display = 'flex';
-        toolbar.style.gap = '10px';
-        toolbar.style.justifyContent = 'center';
-        toolbar.style.marginBottom = '15px';
-
+        toolbar.className = 'top-toolbar';
         toolbar.innerHTML = `
-            <button class="btn btn-info" onclick="app.showInventory()">🎒 Инвентарь</button>
-            <button class="btn btn-warning" onclick="app.showCharacterInfo()">👤 Персонаж</button>
+            <button class="btn btn-info" onclick="app.showInventory()">🎒 Сумка</button>
+            <button class="btn btn-warning" onclick="app.showCharacterInfo()">👤 Профиль</button>
             <button class="btn btn-secondary" onclick="app.logout()">🚪 Выход</button>
         `;
-
         return toolbar;
     }
 
     renderLocationButtons(locationConfig) {
-        const container = document.createElement('div');
-        container.className = 'location-buttons';
+        const wrap = document.createElement('div');
+        wrap.className = 'location-buttons vertical';
 
         for (const key of Object.keys(locationConfig)) {
             if (!key.startsWith('btn')) continue;
+            const cfg = locationConfig[key];
 
-            const btnConfig = locationConfig[key];
             const button = document.createElement('button');
             button.className = 'location-btn';
-            button.textContent = btnConfig.text;
-            button.style.backgroundColor = btnConfig.bg;
-            button.style.color = btnConfig.fg;
-            button.style.fontFamily = btnConfig.fontFamily;
-            button.style.fontSize = `${btnConfig.fontSize}px`;
-            button.style.fontWeight = btnConfig.bold ? 'bold' : 'normal';
-            button.style.width = `${btnConfig.width}px`;
-            button.style.height = `${btnConfig.height}px`;
+            button.textContent = cfg.text;
+            button.style.backgroundColor = cfg.bg;
+            button.style.color = cfg.fg;
 
-            if (btnConfig.isTransition && btnConfig.targetLocation) {
-                button.onclick = () => this.goToLocation(btnConfig.targetLocation);
+            if (cfg.isTransition && cfg.targetLocation) {
+                button.onclick = () => this.goToLocation(cfg.targetLocation);
             } else {
-                button.onclick = () => this.handleLocationAction(key, btnConfig);
+                button.onclick = () => this.handleLocationAction(key, cfg);
             }
 
-            container.appendChild(button);
+            wrap.appendChild(button);
         }
 
-        return container;
+        return wrap;
     }
 
-    renderPlayerStats(container) {
+    renderPlayerStats() {
         const statsDiv = document.createElement('div');
-        statsDiv.className = 'player-stats';
+        statsDiv.className = 'player-stats static-card';
+
+        const hpPercent = Math.max(0, Math.min(100, (this.currentUser.hp / this.currentUser.hpMax) * 100));
+        const mpPercent = Math.max(0, Math.min(100, (this.currentUser.mp / this.currentUser.mpMax) * 100));
+
         statsDiv.innerHTML = `
             <h3>${this.currentUser.username}</h3>
             <div class="player-stat"><span>Класс:</span><span>${this.currentUser.class}</span></div>
             <div class="player-stat"><span>Уровень:</span><span>${this.currentUser.level}</span></div>
             <div class="player-stat"><span>Опыт:</span><span>${this.currentUser.experience}/${expForNextLevel(this.currentUser.level)}</span></div>
             <div class="player-stat"><span>HP:</span><span>${this.currentUser.hp}/${this.currentUser.hpMax}</span></div>
-            <div class="player-hp-bar"><div class="player-hp-fill" style="width: ${(this.currentUser.hp / this.currentUser.hpMax) * 100}%"></div></div>
+            <div class="player-hp-bar"><div class="player-hp-fill" style="width:${hpPercent}%"></div></div>
             <div class="player-stat"><span>MP:</span><span>${this.currentUser.mp}/${this.currentUser.mpMax}</span></div>
-            <div class="player-mp-bar"><div class="player-mp-fill" style="width: ${(this.currentUser.mp / this.currentUser.mpMax) * 100}%"></div></div>
+            <div class="player-mp-bar"><div class="player-mp-fill" style="width:${mpPercent}%"></div></div>
             <div class="player-stat"><span>Атака:</span><span>${this.currentUser.minDmg}-${this.currentUser.maxDmg}</span></div>
             <div class="player-stat"><span>Защита:</span><span>${this.currentUser.defense}</span></div>
         `;
-
-        container.appendChild(statsDiv);
+        return statsDiv;
     }
 
     syncMonsterForLocation(locationConfig) {
@@ -271,10 +278,7 @@ class RPGApp {
             this.currentMonster = null;
             return;
         }
-
-        if (this.currentMonster && this.currentMonster.isAlive) {
-            return;
-        }
+        if (this.currentMonster?.isAlive) return;
 
         this.currentMonster = new Monster(
             null,
@@ -290,44 +294,52 @@ class RPGApp {
             locationConfig.monster.y,
             locationConfig.monster.respawnTime
         );
-        this.currentMonster.addLootItem(new LootItem('healing_potion', 'Малое', [0, 0], [0, 0], [0.5, 1.0], 55, 'Обычный', 'heal', [18, 30]));
-        this.currentMonster.addLootItem(new LootItem('mana_potion', 'Искрящаяся', [0, 0], [0, 0], [0.5, 1.0], 35, 'Обычный', 'mana', [12, 25]));
+
+        this.currentMonster.addLootItem(new LootItem('healing_potion', 'Малое', [0, 0], [0, 0], [0.5, 1], 55, 'Обычный', 'heal', [18, 30]));
+        this.currentMonster.addLootItem(new LootItem('mana_potion', 'Искрящаяся', [0, 0], [0, 0], [0.5, 1], 35, 'Обычный', 'mana', [12, 25]));
         this.currentMonster.addLootItem(new LootItem('wolf_fang', 'Острый', [2, 5], [0, 0], [0.8, 1.5], 25, 'Редкий'));
     }
 
     renderMonster(container) {
-        const monsterFrame = document.createElement('div');
-        monsterFrame.className = 'monster-frame';
-        monsterFrame.style.left = `${this.currentMonster.x}px`;
-        monsterFrame.style.top = `${this.currentMonster.y}px`;
-
-        monsterFrame.innerHTML = `
+        const frame = document.createElement('div');
+        frame.className = 'monster-frame monster-card';
+        frame.style.left = 'unset';
+        frame.style.top = 'unset';
+        frame.innerHTML = `
             <div class="monster-icon">${this.currentMonster.icon}</div>
             <div class="monster-name">${this.currentMonster.name}</div>
             <div class="monster-stats">HP: ${this.currentMonster.hp}/${this.currentMonster.hpMax}</div>
             <div class="monster-stats">Атака: ${this.currentMonster.minDmg}-${this.currentMonster.maxDmg}</div>
-            <button class="btn btn-danger" onclick="app.startBattle()" style="margin-top: 5px;">Сражаться</button>
+            <button class="btn btn-danger" onclick="app.startBattle()">Сражаться</button>
         `;
-
-        container.appendChild(monsterFrame);
+        container.appendChild(frame);
     }
 
     renderLootPile(container, lootPileConfig) {
-        const lootPile = document.createElement('div');
-        lootPile.className = 'loot-pile';
-        lootPile.style.left = `${lootPileConfig.x}px`;
-        lootPile.style.top = `${lootPileConfig.y}px`;
-        lootPile.style.width = `${lootPileConfig.width}px`;
-        lootPile.style.height = `${lootPileConfig.height}px`;
-        lootPile.style.backgroundColor = lootPileConfig.bgColor;
-        lootPile.style.color = lootPileConfig.fgColor;
+        const loot = document.createElement('div');
+        loot.className = 'loot-pile static-card';
+        loot.style.left = 'unset';
+        loot.style.top = 'unset';
+        loot.style.width = '100%';
+        loot.style.height = 'auto';
+        loot.style.backgroundColor = lootPileConfig.bgColor;
+        loot.style.color = lootPileConfig.fgColor;
 
-        const itemsMarkup = lootPileConfig.items.length
-            ? lootPileConfig.items.map(item => `<div class="loot-item" title="${item.name}" onclick="app.pickupItem('${item.id}')">${item.icon}</div>`).join('')
-            : '<div style="color: white; font-size: 12px;">Пусто</div>';
+        const items = lootPileConfig.items.length
+            ? lootPileConfig.items.map(item => `
+                <button class="loot-item" title="${item.name}" onclick="app.pickupItem('${item.id}')">${item.icon}</button>
+              `).join('')
+            : '<div style="color:white;font-size:12px;">Пусто</div>';
 
-        lootPile.innerHTML = `<div class="loot-title">📦 Сундук</div><div class="loot-items">${itemsMarkup}</div>`;
-        container.appendChild(lootPile);
+        loot.innerHTML = `
+            <div class="loot-header">
+                <div class="loot-title">📦 Сундук локации</div>
+                <button class="btn btn-warning" onclick="app.openChest()">Открыть</button>
+            </div>
+            <div class="loot-items">${items}</div>
+        `;
+
+        container.appendChild(loot);
     }
 
     handleLocationAction(btnKey, btnConfig) {
@@ -335,69 +347,55 @@ class RPGApp {
             this.openChest();
             return;
         }
-
         showNotification(`Действие ${btnConfig.text} пока не реализовано`, 'warning');
     }
 
     openChest() {
-        const lootPile = this.config.locations[this.currentLocation].lootPile;
-        if (!lootPile.items.length) {
-            lootPile.items.push(this.createChestItem());
-            if (Math.random() > 0.4) {
-                lootPile.items.push(this.createChestItem());
-            }
+        const pile = this.config.locations[this.currentLocation].lootPile;
+        if (!pile.items.length) {
+            pile.items.push(this.createChestItem());
+            if (Math.random() > 0.4) pile.items.push(this.createChestItem());
             showNotification('Вы открыли сундук и нашли предметы!', 'loot');
         } else {
-            showNotification('В сундуке уже лежит добыча.', 'info');
+            showNotification('В сундуке уже есть добыча.', 'info');
         }
-
         this.renderCurrentLocation();
     }
 
     createChestItem() {
-        const source = Object.values(RPGApp.loadStaticItems());
-        const base = source[getRandomInt(0, source.length - 1)];
+        const list = Object.values(RPGApp.loadStaticItems());
+        const base = list[getRandomInt(0, list.length - 1)];
         const id = generateId('loot');
 
-        if (base.type === 'consumable') {
-            return { ...base, id, value: getRandomInt(18, 40) };
-        }
-
-        if (base.type === 'weapon') {
-            return { ...base, id, damage: getRandomInt(2, 7) };
-        }
-
-        if (base.type === 'armor') {
-            return { ...base, id, defense: getRandomInt(1, 5) };
-        }
-
+        if (base.type === 'consumable') return { ...base, id, value: getRandomInt(18, 40) };
+        if (base.type === 'weapon') return { ...base, id, damage: getRandomInt(2, 7) };
+        if (base.type === 'armor') return { ...base, id, defense: getRandomInt(1, 5) };
         return { ...base, id };
     }
 
     pickupItem(itemId) {
-        const lootPile = this.config.locations[this.currentLocation].lootPile;
-        const index = lootPile.items.findIndex(item => item.id === itemId);
+        const pile = this.config.locations[this.currentLocation].lootPile;
+        const index = pile.items.findIndex(item => item.id === itemId);
         if (index === -1) {
             showNotification('Предмет уже подобран', 'warning');
             return;
         }
 
-        const item = lootPile.items[index];
+        const item = pile.items[index];
         if (!this.currentUser.canCarryItem(item)) {
-            showNotification('Слишком тяжелый предмет для инвентаря', 'warning');
+            showNotification('Слишком тяжелый предмет для сумки', 'warning');
             return;
         }
 
         this.currentUser.addItem(item);
-        lootPile.items.splice(index, 1);
+        pile.items.splice(index, 1);
         this.syncCurrentUser();
-
         showNotification(`Подобрано: ${item.icon} ${item.name}`, 'success');
         this.renderCurrentLocation();
     }
 
     goToLocation(locationName) {
-        if (this.currentMonster && this.currentMonster.isAlive) {
+        if (this.currentMonster?.isAlive) {
             showNotification('Сначала победите монстра!', 'warning');
             return;
         }
@@ -409,9 +407,7 @@ class RPGApp {
     }
 
     startBattle() {
-        if (!this.currentMonster?.isAlive) {
-            return;
-        }
+        if (!this.currentMonster?.isAlive) return;
 
         this.gameContainer.innerHTML = `
             <div class="game-location active" data-location="battle">
@@ -459,14 +455,13 @@ class RPGApp {
             this.finishBattle(true);
             return;
         }
-
         this.monsterAttack();
     }
 
     useMagicAttack() {
         if (!this.currentMonster?.isAlive) return this.renderCurrentLocation();
-        const manaCost = 8;
 
+        const manaCost = 8;
         if (this.currentUser.mp < manaCost) {
             showNotification('Недостаточно маны для заклинания', 'warning');
             return;
@@ -481,7 +476,6 @@ class RPGApp {
             this.finishBattle(true);
             return;
         }
-
         this.monsterAttack();
     }
 
@@ -492,26 +486,25 @@ class RPGApp {
     }
 
     useItem() {
-        const potion = this.currentUser.inventory.find(i => i.type === 'consumable');
+        const potion = this.currentUser.inventory.find(item => item.type === 'consumable');
         if (!potion) {
-            showNotification('Нет расходников в инвентаре', 'warning');
+            showNotification('Нет расходников в сумке', 'warning');
             return;
         }
 
         this.currentUser.useConsumable(potion);
-        showNotification(`Использован предмет: ${potion.name}`, 'success');
         this.syncCurrentUser();
         this.updateBattleScreen();
+        showNotification(`Использован предмет: ${potion.name}`, 'success');
     }
 
     monsterAttack() {
         if (!this.currentMonster?.isAlive) return this.renderCurrentLocation();
 
         const rawDamage = this.currentMonster.attack();
-        const actualDamage = this.currentUser.battleState.defenseActive ? Math.floor(rawDamage / 2) : rawDamage;
-        const result = this.currentUser.takeDamage(actualDamage);
-
-        showNotification(`Монстр нанес ${actualDamage} урона`, 'info');
+        const damage = this.currentUser.battleState.defenseActive ? Math.floor(rawDamage / 2) : rawDamage;
+        const result = this.currentUser.takeDamage(damage);
+        showNotification(`Монстр нанес ${damage} урона`, 'info');
 
         if (!result.alive) {
             this.finishBattle(false);
@@ -527,11 +520,10 @@ class RPGApp {
         if (victory) {
             const expReward = this.currentMonster.expReward;
             const loot = this.currentMonster.generateLoot();
-            const result = this.currentUser.addExperience(expReward);
+            const level = this.currentUser.addExperience(expReward);
             this.addLootToCurrentLocation(loot);
-
             this.syncCurrentUser();
-            this.showBattleResult(true, this.currentMonster.name, expReward, loot, result.levelsGained || 0);
+            this.showBattleResult(true, this.currentMonster.name, expReward, loot, level.levelsGained || 0);
         } else {
             this.currentUser.restoreHealthAndMana();
             this.syncCurrentUser();
@@ -540,6 +532,17 @@ class RPGApp {
 
         this.currentMonster = null;
         this.renderCurrentLocation();
+    }
+
+    showBattleResult(victory, monsterName, expReward, lootItems = [], levelsGained = 0) {
+        let message = victory
+            ? `ПОБЕДА! Вы победили ${monsterName}!<br>Получено опыта: ${expReward}`
+            : `ПОРАЖЕНИЕ! Вас победил ${monsterName}.`;
+
+        if (levelsGained > 0) message += `<br>🏆 Повышение уровня: +${levelsGained}`;
+        if (lootItems.length > 0) message += '<br>Лут добавлен в сундук текущей локации.';
+
+        showNotification(message, victory ? 'victory' : 'error', 4500);
     }
 
     updateBattleScreen() {
@@ -552,53 +555,43 @@ class RPGApp {
         if (monsterHp && this.currentMonster) monsterHp.textContent = this.currentMonster.hp;
     }
 
-    showBattleResult(victory, monsterName, expReward, lootItems = [], levelsGained = 0) {
-        let message = victory
-            ? `ПОБЕДА! Вы победили ${monsterName}!<br>Получено опыта: ${expReward}`
-            : `ПОРАЖЕНИЕ! Вас победил ${monsterName}.`;
-
-        if (levelsGained > 0) {
-            message += `<br>🏆 Повышение уровня: +${levelsGained}`;
-        }
-
-        if (lootItems.length > 0) {
-            message += `<br>Добыча добавлена в сундук локации.`;
-        }
-
-        showNotification(message, victory ? 'victory' : 'error', 4500);
-    }
-
     addLootToCurrentLocation(items) {
-        const lootPile = this.config.locations[this.currentLocation].lootPile;
-        for (const item of items) {
-            lootPile.items.push(item);
-        }
+        const pile = this.config.locations[this.currentLocation].lootPile;
+        for (const item of items) pile.items.push(item);
     }
 
     showInventory() {
         const inventory = this.currentUser.inventory;
-        const equippedWeapon = this.currentUser.equippedItems.weapon ? this.currentUser.equippedItems.weapon.name : 'нет';
-        const equippedArmor = this.currentUser.equippedItems.armor ? this.currentUser.equippedItems.armor.name : 'нет';
+        const itemsMarkup = inventory.length ? inventory.map(item => {
+            return `
+            <div class="inv-item-row">
+                <div class="inv-item-main">
+                    <span class="inv-icon">${item.icon || '📦'}</span>
+                    <div>
+                        <div class="inv-name">${item.name}</div>
+                        <div class="inv-meta">${this.getItemDescription(item)}</div>
+                    </div>
+                </div>
+                <div class="inv-actions">
+                    <button class="btn btn-info" onclick="app.inventoryAction('use','${item.id}')">Исп.</button>
+                    <button class="btn btn-warning" onclick="app.inventoryAction('equip','${item.id}')">Надеть</button>
+                    <button class="btn btn-danger" onclick="app.inventoryAction('drop','${item.id}')">Бросить</button>
+                </div>
+            </div>`;
+        }).join('') : '<p>Сумка пуста.</p>';
 
         const content = `
-            <div>
-                <p><strong>Экипировка:</strong> оружие — ${equippedWeapon}, броня — ${equippedArmor}</p>
-                <p><strong>Вес:</strong> ${this.currentUser.getCurrentInventoryWeight().toFixed(1)} / ${this.currentUser.getMaxInventoryWeight()}</p>
-                <hr style="margin: 10px 0; border-color: #3f5870;">
-                ${inventory.length ? inventory.map(item => `
-                    <div style="display:flex; justify-content:space-between; gap:10px; margin-bottom:8px; align-items:center;">
-                        <span>${item.icon} ${item.name}</span>
-                        <span>
-                            <button class="btn btn-info" onclick="app.inventoryAction('use','${item.id}')">Исп.</button>
-                            <button class="btn btn-warning" onclick="app.inventoryAction('equip','${item.id}')">Надеть</button>
-                            <button class="btn btn-danger" onclick="app.inventoryAction('drop','${item.id}')">Бросить</button>
-                        </span>
-                    </div>
-                `).join('') : '<p>Инвентарь пуст.</p>'}
+            <div class="inventory-panel">
+                <div class="inventory-summary">
+                    <div>🎒 Вес: ${this.currentUser.getCurrentInventoryWeight().toFixed(1)} / ${this.currentUser.getMaxInventoryWeight()}</div>
+                    <div>⚔️ Оружие: ${this.currentUser.equippedItems.weapon?.name || 'не экипировано'}</div>
+                    <div>🛡️ Броня: ${this.currentUser.equippedItems.armor?.name || 'не экипировано'}</div>
+                </div>
+                <div class="inventory-list">${itemsMarkup}</div>
             </div>
         `;
 
-        showModal(content, 'Инвентарь');
+        showModal(content, 'Интерфейс сумки');
     }
 
     inventoryAction(action, itemId) {
@@ -612,20 +605,21 @@ class RPGApp {
             this.currentUser.useConsumable(item);
             showNotification(`Использовано: ${item.name}`, 'success');
         } else if (action === 'equip') {
-            const check = this.currentUser.checkItemRequirements(item);
-            if (!check.allowed) {
-                showNotification(check.reason, 'warning');
+            const req = this.currentUser.checkItemRequirements(item);
+            if (!req.allowed) {
+                showNotification(req.reason, 'warning');
                 return;
             }
             const success = this.currentUser.equipItem(itemId);
             showNotification(success ? `Экипировано: ${item.name}` : 'Этот предмет нельзя экипировать', success ? 'success' : 'warning');
         } else if (action === 'drop') {
-            this.currentUser.removeItem(itemId);
-            this.config.locations[this.currentLocation].lootPile.items.push(item);
+            const dropped = this.currentUser.removeItem(itemId);
+            this.config.locations[this.currentLocation].lootPile.items.push(dropped);
             showNotification(`Выброшено: ${item.name}`, 'info');
         } else {
             showNotification('Недоступное действие', 'warning');
         }
+    }
 
         this.syncCurrentUser();
         closeModal();
@@ -636,15 +630,62 @@ class RPGApp {
     showCharacterInfo() {
         const p = this.currentUser;
         const content = `
-            <p><strong>Имя:</strong> ${p.username}</p>
-            <p><strong>Класс/Пол:</strong> ${p.class} / ${p.gender}</p>
-            <p><strong>Уровень:</strong> ${p.level}</p>
-            <p><strong>Опыт:</strong> ${p.experience}/${expForNextLevel(p.level)}</p>
-            <p><strong>Характеристики:</strong> Сила ${p.stats.strength}, Ловкость ${p.stats.agility}, Интеллект ${p.stats.intelligence}, Выносливость ${p.stats.vitality}</p>
-            <p><strong>Последний вход:</strong> ${new Date(p.metadata.lastLogin).toLocaleString('ru-RU')}</p>
+            <div class="profile-panel">
+                <div class="profile-head">
+                    <h3>${p.username}</h3>
+                    <div>${p.class} • ${p.gender}</div>
+                </div>
+                <div class="profile-grid">
+                    <div class="profile-card">
+                        <div><strong>Уровень:</strong> ${p.level}</div>
+                        <div><strong>Опыт:</strong> ${p.experience}/${expForNextLevel(p.level)}</div>
+                        <div><strong>Атака:</strong> ${p.minDmg}-${p.maxDmg}</div>
+                        <div><strong>Защита:</strong> ${p.defense}</div>
+                    </div>
+                    <div class="profile-card">
+                        <div><strong>HP/MP:</strong> ${p.hp}/${p.hpMax} • ${p.mp}/${p.mpMax}</div>
+                        <div><strong>Сила:</strong> ${p.stats.strength}</div>
+                        <div><strong>Ловкость:</strong> ${p.stats.agility}</div>
+                        <div><strong>Интеллект:</strong> ${p.stats.intelligence}</div>
+                        <div><strong>Выносливость:</strong> ${p.stats.vitality}</div>
+                    </div>
+                    <div class="profile-card equipment-card">
+                        <h4>Экипировка</h4>
+                        <div class="equip-row">
+                            <span>⚔️ ${p.equippedItems.weapon?.name || 'Оружие не надето'}</span>
+                            <button class="btn btn-secondary" onclick="app.unequipSlot('weapon')">Снять</button>
+                        </div>
+                        <div class="equip-row">
+                            <span>🛡️ ${p.equippedItems.armor?.name || 'Броня не надета'}</span>
+                            <button class="btn btn-secondary" onclick="app.unequipSlot('armor')">Снять</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-foot">Последний вход: ${new Date(p.metadata.lastLogin).toLocaleString('ru-RU')}</div>
+            </div>
         `;
 
-        showModal(content, 'Профиль персонажа');
+        showModal(content, 'Профиль игрока');
+    }
+
+    unequipSlot(slot) {
+        const ok = this.currentUser.unequipItem(slot);
+        if (!ok) {
+            showNotification('Слот уже пуст', 'warning');
+            return;
+        }
+        this.syncCurrentUser();
+        closeModal();
+        this.showCharacterInfo();
+        this.renderCurrentLocation();
+        showNotification('Предмет снят и перемещён в сумку', 'success');
+    }
+
+    getItemDescription(item) {
+        if (item.type === 'weapon') return `Оружие • Урон +${item.damage || 0}`;
+        if (item.type === 'armor') return `Броня • Защита +${item.defense || 0}`;
+        if (item.type === 'consumable') return `Расходник • ${item.effect === 'mana' ? 'Мана' : 'HP'} +${item.value || 0}`;
+        return 'Предмет';
     }
 
     endBattle() {
@@ -674,26 +715,21 @@ class RPGApp {
     syncCurrentUser() {
         if (!this.currentUser) return;
 
-        const playersDB = this.loadPlayersDB();
-        const old = playersDB.players[this.currentUser.username] || {};
-        const updated = {
-            ...this.currentUser.toDict(),
-            passwordHash: old.passwordHash || ''
-        };
+        const db = this.loadPlayersDB();
+        const old = db.players[this.currentUser.username] || {};
+        const updated = { ...this.currentUser.toDict(), passwordHash: old.passwordHash || '' };
 
-        playersDB.players[this.currentUser.username] = updated;
-        playersDB.metadata.lastUpdate = formatDate();
-        playersDB.metadata.totalPlayers = Object.keys(playersDB.players).length;
+        db.players[this.currentUser.username] = updated;
+        db.metadata.lastUpdate = formatDate();
+        db.metadata.totalPlayers = Object.keys(db.players).length;
 
-        saveToStorage('playersDB', playersDB);
+        saveToStorage('playersDB', db);
         saveToStorage('currentUser', updated);
     }
 
     ensureDefaultLoot() {
         for (const loc of Object.values(this.config.locations)) {
-            if (!Array.isArray(loc.lootPile.items)) {
-                loc.lootPile.items = [];
-            }
+            if (!Array.isArray(loc.lootPile.items)) loc.lootPile.items = [];
         }
     }
 
